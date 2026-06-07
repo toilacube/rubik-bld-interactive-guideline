@@ -1013,6 +1013,43 @@ textarea {
   box-shadow: 0 2px 5px rgba(40, 92, 140, 0.2);
 }
 
+.sticker-letter-bubble.face-U {
+  background: #f7f5ee;
+  color: #1e211e;
+  border: 1px solid var(--line);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.sticker-letter-bubble.face-D {
+  background: #f3d640;
+  color: #1e211e;
+  box-shadow: 0 2px 5px rgba(243, 214, 64, 0.25);
+}
+
+.sticker-letter-bubble.face-F {
+  background: #2fa65a;
+  color: #fffdf5;
+  box-shadow: 0 2px 5px rgba(47, 166, 90, 0.25);
+}
+
+.sticker-letter-bubble.face-B {
+  background: #2d62b7;
+  color: #f8f7ef;
+  box-shadow: 0 2px 5px rgba(45, 98, 183, 0.25);
+}
+
+.sticker-letter-bubble.face-R {
+  background: #d94330;
+  color: #fff8e8;
+  box-shadow: 0 2px 5px rgba(217, 67, 48, 0.25);
+}
+
+.sticker-letter-bubble.face-L {
+  background: #ee962d;
+  color: #1e211e;
+  box-shadow: 0 2px 5px rgba(238, 150, 45, 0.25);
+}
+
 .sticker-id-pill {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.92rem;

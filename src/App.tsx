@@ -385,7 +385,7 @@ function LetterSchemeCube() {
                 <div className="sticker-info">
                   <span className="sticker-label">{t.selectedStickerLabel}</span>
                   <div className="sticker-badge-row">
-                    <span className="sticker-letter-bubble">{stickerData.letter}</span>
+                    <span className={`sticker-letter-bubble face-${stickerData.id[0]}`}>{stickerData.letter}</span>
                     <span className="sticker-id-pill">{stickerData.id}</span>
                     <span className={`piece-type-pill ${stickerData.type}`}>
                       {stickerData.type === 'edge' ? t.edgesCard.toLowerCase() : t.cornersCard.toLowerCase()}
