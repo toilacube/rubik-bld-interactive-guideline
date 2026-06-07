@@ -53,7 +53,26 @@ async function main() {
     execSync('npm run build', { stdio: 'inherit' });
     console.log('Build completed successfully.');
 
-    // 3. Deploy to Cloudflare Pages
+    // 3. Ensure Pages project exists
+    console.log(`Ensuring Pages project "${PROJECT_NAME}" exists...`);
+    try {
+      await cfApi(`/accounts/${ACCOUNT_ID}/pages/projects`, {
+        method: 'POST',
+        body: JSON.stringify({
+          name: PROJECT_NAME,
+          production_branch: 'main',
+        }),
+      });
+      console.log(`Created Pages project "${PROJECT_NAME}".`);
+    } catch (error) {
+      if (error.message.includes('already exists') || error.message.includes('duplicate')) {
+        console.log(`Pages project "${PROJECT_NAME}" already exists.`);
+      } else {
+        console.warn(`Warning: Could not verify/create Pages project: ${error.message}`);
+      }
+    }
+
+    // 4. Deploy to Cloudflare Pages
     console.log(`Deploying to Cloudflare Pages project "${PROJECT_NAME}"...`);
     // Pass the CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN to wrangler command env
     execSync(`npx wrangler pages deploy dist --project-name=${PROJECT_NAME} --branch=main --commit-dirty=true`, {
