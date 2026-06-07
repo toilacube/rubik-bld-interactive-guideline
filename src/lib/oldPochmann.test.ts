@@ -7,6 +7,7 @@ import {
   invertAlg,
   memoFromScramble,
   pairLetters,
+  setupMoves,
 } from './oldPochmann'
 
 describe('Old Pochmann helpers', () => {
@@ -39,6 +40,15 @@ describe('Old Pochmann helpers', () => {
     expect(cornerStickerById.get('LUB')?.letter).toBe('E')
     expect(cornerStickerById.get('DFR')?.letter).toBe('V')
     expect(cornerStickerById.get('DFL')?.letter).toBe('U')
+  })
+
+  it('keeps setup moves and undo moves available for target letters', () => {
+    expect(setupMoves.edge.E).toBe("L Dw' L")
+    expect(invertAlg(setupMoves.edge.E)).toBe("L' Dw L'")
+    expect(setupMoves.edge.D).toBe('')
+    expect(setupMoves.corner.Q).toBe("R D'")
+    expect(invertAlg(setupMoves.corner.Q)).toBe("D R'")
+    expect(setupMoves.corner.V).toBe('')
   })
 
   it('generates bounded memo for J Perm example solves', async () => {
