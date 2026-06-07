@@ -4,7 +4,7 @@ test('renders the concept visualizer with a 3D cube', async ({ page }) => {
   await page.goto('/')
 
   await expect(page.getByRole('heading', { name: 'Old Pochmann model' })).toBeVisible()
-  await expect(page.locator('twisty-player')).toBeVisible()
+  await expect(page.locator('twisty-player').first()).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Letter scheme cube' })).toBeVisible()
   await expect(page.getByLabel('Full letter scheme net')).toBeVisible()
   await expect(page.getByLabel('Visible letter scheme cube')).toHaveCount(0)

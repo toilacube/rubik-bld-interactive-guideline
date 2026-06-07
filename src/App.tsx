@@ -204,24 +204,63 @@ function App() {
             </div>
           </header>
 
-          <section className="cube-stage" aria-label="3D cube guideline">
-            <div className="cube-frame">
-              <twisty-player
-                key={`${mode}-${cubeAlg}-${scramble}`}
-                puzzle="3x3x3"
-                alg={cubeAlg}
-                experimental-setup-alg={mode === 'trainer' ? scramble : undefined}
-                experimental-setup-anchor="start"
-                hint-facelets="floating"
-                background="none"
-                back-view="top-right"
-              />
+          {mode === 'concepts' ? (
+            <div className="concepts-stages">
+              <section className="cube-stage" aria-label="Edge Swap 3D guideline">
+                <div className="cube-frame">
+                  <twisty-player
+                    key="concepts-edge"
+                    puzzle="3x3x3"
+                    alg={EDGE_SWAP}
+                    experimental-setup-anchor="start"
+                    hint-facelets="floating"
+                    background="none"
+                    back-view="top-right"
+                  />
+                </div>
+                <div className="current-alg">
+                  <span>{t.edgeSwap}</span>
+                  <code>{EDGE_SWAP}</code>
+                </div>
+              </section>
+              <section className="cube-stage" aria-label="Corner Swap 3D guideline">
+                <div className="cube-frame">
+                  <twisty-player
+                    key="concepts-corner"
+                    puzzle="3x3x3"
+                    alg={CORNER_SWAP}
+                    experimental-setup-anchor="start"
+                    hint-facelets="floating"
+                    background="none"
+                    back-view="top-right"
+                  />
+                </div>
+                <div className="current-alg">
+                  <span>{t.cornerSwap}</span>
+                  <code>{CORNER_SWAP}</code>
+                </div>
+              </section>
             </div>
-            <div className="current-alg">
-              <span>{mode === 'trainer' ? t.activeExecution : t.visibleAlgorithm}</span>
-              <code>{cubeAlg || t.selectTargetLetter}</code>
-            </div>
-          </section>
+          ) : (
+            <section className="cube-stage" aria-label="3D cube guideline">
+              <div className="cube-frame">
+                <twisty-player
+                  key={`${mode}-${cubeAlg}-${scramble}`}
+                  puzzle="3x3x3"
+                  alg={cubeAlg}
+                  experimental-setup-alg={mode === 'trainer' ? scramble : undefined}
+                  experimental-setup-anchor="start"
+                  hint-facelets="floating"
+                  background="none"
+                  back-view="top-right"
+                />
+              </div>
+              <div className="current-alg">
+                <span>{mode === 'trainer' ? t.activeExecution : t.visibleAlgorithm}</span>
+                <code>{cubeAlg || t.selectTargetLetter}</code>
+              </div>
+            </section>
+          )}
 
           {mode === 'concepts' && <ConceptsPanel />}
           {mode === 'guided' && (

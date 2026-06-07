@@ -1365,3 +1365,37 @@ textarea {
   font-weight: 600;
   color: var(--ink);
 }
+
+/* Concepts page dual 3D stages layout */
+.concepts-stages {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.concepts-stages .cube-stage {
+  grid-template-columns: 1fr;
+  min-height: auto;
+}
+
+.concepts-stages .cube-frame {
+  min-height: 280px;
+}
+
+.concepts-stages twisty-player {
+  min-height: 260px;
+}
+
+.concepts-stages .current-alg {
+  border-left: none;
+  border-top: 1px solid var(--line);
+  padding: 16px;
+  gap: 8px;
+}
+
+@media (max-width: 1024px) {
+  .concepts-stages {
+    grid-template-columns: 1fr;
+  }
+}
