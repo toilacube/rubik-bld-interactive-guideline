@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, createContext, useContext } from 'react'
+import { useEffect, useMemo, useState, createContext, useContext, useRef } from 'react'
 import 'cubing/twisty'
 import './App.css'
 import {
@@ -252,9 +252,50 @@ function App() {
 
 function ConceptsPanel() {
   const { t } = useTranslation()
+  const [activeAlgSticker, setActiveAlgSticker] = useState<Sticker | null>(null)
+  const dialogRef = useRef<HTMLDialogElement | null>(null)
+
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+
+    if (activeAlgSticker) {
+      dialog.showModal()
+    } else {
+      dialog.close()
+    }
+  }, [activeAlgSticker])
+
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+
+    const handleBackdropClick = (event: MouseEvent) => {
+      if (event.target !== dialog) return
+
+      const rect = dialog.getBoundingClientRect()
+      const isDialogContent = (
+        rect.top <= event.clientY &&
+        event.clientY <= rect.top + rect.height &&
+        rect.left <= event.clientX &&
+        event.clientX <= rect.left + rect.width
+      )
+
+      if (!isDialogContent) {
+        dialog.close()
+        setActiveAlgSticker(null)
+      }
+    }
+
+    dialog.addEventListener('click', handleBackdropClick)
+    return () => {
+      dialog.removeEventListener('click', handleBackdropClick)
+    }
+  }, [activeAlgSticker])
+
   return (
     <section className="content-grid">
-      <LetterSchemeCube />
+      <LetterSchemeCube onOpenDialog={setActiveAlgSticker} />
 
       <article className="learning-panel wide">
         <h2>{t.conceptStack}</h2>
@@ -273,10 +314,72 @@ function ConceptsPanel() {
       <AlgorithmCard title={t.parity} label={t.oddAndOdd} alg={PARITY_ALG} />
 
       <div className="letter-schemes">
-        <LetterMap title={t.edgeLetterScheme} type="edge" />
-        <LetterMap title={t.cornerLetterScheme} type="corner" />
+        <LetterMap title={t.edgeLetterScheme} type="edge" onRowClick={setActiveAlgSticker} />
+        <LetterMap title={t.cornerLetterScheme} type="corner" onRowClick={setActiveAlgSticker} />
       </div>
       <SlowLearningGuide />
+
+      {activeAlgSticker && (
+        <dialog
+          ref={dialogRef}
+          className="alg-dialog"
+          {...({ closedby: 'any' } as Record<string, string>)}
+          aria-labelledby="dialog-title"
+          onClose={() => setActiveAlgSticker(null)}
+        >
+          <div className="dialog-header">
+            <h2 id="dialog-title">
+              {t.fullAlgorithmDialogTitle
+                .replace('{letter}', activeAlgSticker.letter)
+                .replace('{sticker}', activeAlgSticker.id)}
+            </h2>
+            <button
+              type="button"
+              className="dialog-close-btn"
+              onClick={() => {
+                dialogRef.current?.close()
+                setActiveAlgSticker(null)
+              }}
+              aria-label={t.closeDialog}
+            >
+              &times;
+            </button>
+          </div>
+          <div className="dialog-body">
+            <div className="dialog-cube-frame">
+              <twisty-player
+                key={`dialog-${activeAlgSticker.type}-${activeAlgSticker.letter}`}
+                puzzle="3x3x3"
+                alg={executionAlg(activeAlgSticker.type, activeAlgSticker.letter)}
+                experimental-setup-anchor="start"
+                hint-facelets="floating"
+                background="none"
+                back-view="top-right"
+              />
+            </div>
+            <div className="dialog-alg-details">
+              <div className="dialog-alg-chip">
+                <span>{t.visibleAlgorithm}</span>
+                <code>{executionAlg(activeAlgSticker.type, activeAlgSticker.letter)}</code>
+              </div>
+              <div className="dialog-alg-steps">
+                <div>
+                  <strong>{t.setupMovesLabel}:</strong>
+                  <code>{setupMoves[activeAlgSticker.type][activeAlgSticker.letter] || t.none}</code>
+                </div>
+                <div>
+                  <strong>{activeAlgSticker.type === 'edge' ? t.edgeSwap : t.cornerSwap}:</strong>
+                  <code>{activeAlgSticker.type === 'edge' ? EDGE_SWAP : CORNER_SWAP}</code>
+                </div>
+                <div>
+                  <strong>{t.undoMovesLabel}:</strong>
+                  <code>{invertAlg(setupMoves[activeAlgSticker.type][activeAlgSticker.letter] ?? '') || t.none}</code>
+                </div>
+              </div>
+            </div>
+          </div>
+        </dialog>
+      )}
     </section>
   )
 }
@@ -314,7 +417,7 @@ const cubeFaces = {
   ],
 } satisfies Record<string, string[][]>
 
-function LetterSchemeCube() {
+function LetterSchemeCube({ onOpenDialog }: { onOpenDialog: (sticker: Sticker) => void }) {
   const { t } = useTranslation()
   const [selectedSticker, setSelectedSticker] = useState<string | null>(null)
 
@@ -418,6 +521,15 @@ function LetterSchemeCube() {
                       : (invertAlg(setupMoves[stickerData.type][stickerData.letter] ?? '') || t.none)}
                   </code>
                 </div>
+                {!isBuffer(stickerData.id) && (
+                  <button
+                    type="button"
+                    className="play-alg-btn"
+                    onClick={() => onOpenDialog(stickerData)}
+                  >
+                    <span>▶</span> {t.runAlgorithm}
+                  </button>
+                )}
               </div>
             </div>
           ) : (
@@ -729,7 +841,15 @@ function AlgorithmCard({
   )
 }
 
-function LetterMap({ title, type }: { title: string; type: PieceType }) {
+function LetterMap({
+  title,
+  type,
+  onRowClick,
+}: {
+  title: string
+  type: PieceType
+  onRowClick: (sticker: Sticker) => void
+}) {
   const { t } = useTranslation()
   const stickers = [...(type === 'edge' ? edgeStickers : cornerStickers)].sort(
     (a, b) => a.letter.localeCompare(b.letter),
@@ -746,20 +866,46 @@ function LetterMap({ title, type }: { title: string; type: PieceType }) {
           <span>{t.letterTableHead.undo}</span>
         </div>
         {stickers.map((sticker) => (
-          <LetterSetupRow key={sticker.id} sticker={sticker} />
+          <LetterSetupRow
+            key={sticker.id}
+            sticker={sticker}
+            onClick={() => onRowClick(sticker)}
+          />
         ))}
       </div>
     </article>
   )
 }
 
-function LetterSetupRow({ sticker }: { sticker: Sticker }) {
+function LetterSetupRow({
+  sticker,
+  onClick,
+}: {
+  sticker: Sticker
+  onClick: () => void
+}) {
   const { t } = useTranslation()
   const setup = setupForSticker(sticker)
   const undo = setup.kind === 'target' ? invertAlg(setup.setup) : setup.setup
+  const isBuf = isBuffer(sticker.id)
 
   return (
-    <div className={isBuffer(sticker.id) ? 'letter-row buffer' : 'letter-row'}>
+    <div
+      className={isBuf ? 'letter-row buffer' : 'letter-row clickable'}
+      onClick={!isBuf ? onClick : undefined}
+      role={!isBuf ? 'button' : undefined}
+      tabIndex={!isBuf ? 0 : undefined}
+      onKeyDown={
+        !isBuf
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onClick()
+              }
+            }
+          : undefined
+      }
+    >
       <strong>{sticker.letter}</strong>
       <span>{sticker.id}</span>
       <code>{setup.setup || t.none}</code>

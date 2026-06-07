@@ -82,3 +82,41 @@ test('interacts with the letter scheme cube and shows setup/undo moves', async (
   await expect(page.getByText('Click any letter to view setup & undo moves')).toBeVisible()
 })
 
+test('opens 3D rubik dialog when clicking a letter scheme row or play button', async ({ page }) => {
+  await page.goto('/')
+
+  // 1. Click on a row in the Edge letter scheme table (e.g., letter 'A')
+  const rowA = page.locator('.letter-row.clickable', { has: page.locator('strong', { hasText: /^A$/ }) })
+  await rowA.click()
+
+  // Verify dialog is visible
+  const dialog = page.locator('dialog.alg-dialog')
+  await expect(dialog).toBeVisible()
+  await expect(dialog.locator('h2')).toContainText('Full Algorithm for target "A"')
+  await expect(dialog.locator('twisty-player')).toBeVisible()
+  await expect(dialog.locator('.dialog-alg-chip code')).toContainText("Lw2 D' L2")
+
+  // Close the dialog
+  await dialog.locator('.dialog-close-btn').click()
+  await expect(dialog).not.toBeVisible()
+
+  // 2. Click on a sticker in the interactive cube (e.g., corner 'B' / sticker 'UBR')
+  const stickerB = page.locator('.face-U span').filter({ has: page.locator('small', { hasText: /^UBR$/ }) })
+  await stickerB.click()
+
+  // Details card should be visible, and click "Run Algorithm"
+  const playBtn = page.locator('.play-alg-btn')
+  await expect(playBtn).toBeVisible()
+  await playBtn.click()
+
+  // Verify dialog is visible for target 'B'
+  await expect(dialog).toBeVisible()
+  await expect(dialog.locator('h2')).toContainText('Full Algorithm for target "B"')
+  await expect(dialog.locator('twisty-player')).toBeVisible()
+
+  // Close it using backdrop click (outside the dialog)
+  await page.mouse.click(10, 10)
+  await expect(dialog).not.toBeVisible()
+})
+
+

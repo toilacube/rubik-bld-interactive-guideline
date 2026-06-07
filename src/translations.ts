@@ -157,7 +157,10 @@ export const translations = {
     setupMovesLabel: 'Setup moves',
     undoMovesLabel: 'Undo moves',
     bufferLabel: 'Buffer (no setup required)',
-    clickToViewSetup: 'Click any letter to view setup & undo moves'
+    clickToViewSetup: 'Click any letter to view setup & undo moves',
+    runAlgorithm: 'Run Algorithm',
+    fullAlgorithmDialogTitle: 'Full Algorithm for target "{letter}" ({sticker})',
+    closeDialog: 'Close'
   },
   vi: {
     brandMark: 'Old Pochmann',
@@ -315,6 +318,9 @@ export const translations = {
     setupMovesLabel: 'Công thức thiết lập',
     undoMovesLabel: 'Công thức đảo ngược',
     bufferLabel: 'Bộ đệm (không cần thiết lập)',
-    clickToViewSetup: 'Nhấp vào chữ cái bất kỳ để xem thiết lập & đảo ngược'
+    clickToViewSetup: 'Nhấp vào chữ cái bất kỳ để xem thiết lập & đảo ngược',
+    runAlgorithm: 'Chạy công thức',
+    fullAlgorithmDialogTitle: 'Công thức đầy đủ cho mục tiêu "{letter}" ({sticker})',
+    closeDialog: 'Đóng'
   }
 }
