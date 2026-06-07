@@ -152,7 +152,12 @@ export const translations = {
     protocolErrorDesc: 'If you lose your place, stop immediately. Find the last completed letter in the execution list instead of guessing the next algorithm.',
     letterSchemeCube: 'Letter scheme cube',
     letterSchemeCubeDesc: 'Centers stay as face names. Edge and corner stickers show their memo letters for the default white-top, green-front orientation.',
-    bufferStickersHighlighted: 'Buffer stickers highlighted'
+    bufferStickersHighlighted: 'Buffer stickers highlighted',
+    selectedStickerLabel: 'Selected sticker',
+    setupMovesLabel: 'Setup moves',
+    undoMovesLabel: 'Undo moves',
+    bufferLabel: 'Buffer (no setup required)',
+    clickToViewSetup: 'Click any letter to view setup & undo moves'
   },
   vi: {
     brandMark: 'Old Pochmann',
@@ -305,6 +310,11 @@ export const translations = {
     protocolErrorDesc: 'Nếu bạn bị lạc hướng, hãy dừng lại ngay lập tức. Tìm chữ cái hoàn thành cuối cùng trong danh sách thực thi thay vì đoán công thức tiếp theo.',
     letterSchemeCube: 'Khối sơ đồ chữ cái',
     letterSchemeCubeDesc: 'Các tâm giữ nguyên tên mặt. Nhãn nhám cạnh và góc hiển thị các chữ cái ghi nhớ tương ứng cho định hướng mặc định mặt trên màu trắng, mặt trước màu xanh lá.',
-    bufferStickersHighlighted: 'Các nhãn bộ đệm được làm nổi bật'
+    bufferStickersHighlighted: 'Các nhãn bộ đệm được làm nổi bật',
+    selectedStickerLabel: 'Nhãn nhám đã chọn',
+    setupMovesLabel: 'Công thức thiết lập',
+    undoMovesLabel: 'Công thức đảo ngược',
+    bufferLabel: 'Bộ đệm (không cần thiết lập)',
+    clickToViewSetup: 'Nhấp vào chữ cái bất kỳ để xem thiết lập & đảo ngược'
   }
 }

@@ -316,6 +316,12 @@ const cubeFaces = {
 
 function LetterSchemeCube() {
   const { t } = useTranslation()
+  const [selectedSticker, setSelectedSticker] = useState<string | null>(null)
+
+  const stickerData = selectedSticker
+    ? (edgeStickerById.get(selectedSticker) || cornerStickerById.get(selectedSticker))
+    : null
+
   return (
     <article className="learning-panel wide letter-cube-panel">
       <div className="panel-heading">
@@ -328,31 +334,137 @@ function LetterSchemeCube() {
 
       <div className="scheme-net" aria-label="Full letter scheme net">
         <div />
-        <CubeFace face="U" stickers={cubeFaces.U} />
+        <CubeFace
+          face="U"
+          stickers={cubeFaces.U}
+          selectedSticker={selectedSticker}
+          onSelectSticker={setSelectedSticker}
+        />
         <div />
-        <CubeFace face="L" stickers={cubeFaces.L} />
-        <CubeFace face="F" stickers={cubeFaces.F} />
-        <CubeFace face="R" stickers={cubeFaces.R} />
+        <CubeFace
+          face="L"
+          stickers={cubeFaces.L}
+          selectedSticker={selectedSticker}
+          onSelectSticker={setSelectedSticker}
+        />
+        <CubeFace
+          face="F"
+          stickers={cubeFaces.F}
+          selectedSticker={selectedSticker}
+          onSelectSticker={setSelectedSticker}
+        />
+        <CubeFace
+          face="R"
+          stickers={cubeFaces.R}
+          selectedSticker={selectedSticker}
+          onSelectSticker={setSelectedSticker}
+        />
         <div />
-        <CubeFace face="B" stickers={cubeFaces.B} />
+        <CubeFace
+          face="B"
+          stickers={cubeFaces.B}
+          selectedSticker={selectedSticker}
+          onSelectSticker={setSelectedSticker}
+        />
         <div />
         <div />
-        <CubeFace face="D" stickers={cubeFaces.D} />
+        <CubeFace
+          face="D"
+          stickers={cubeFaces.D}
+          selectedSticker={selectedSticker}
+          onSelectSticker={setSelectedSticker}
+        />
         <div />
+      </div>
+
+      <div className="sticker-details-container">
+        {stickerData ? (
+          <div className="sticker-details-card">
+            <div className="details-header">
+              <div className="sticker-info">
+                <span className="sticker-label">{t.selectedStickerLabel}</span>
+                <div className="sticker-badge-row">
+                  <span className="sticker-letter-bubble">{stickerData.letter}</span>
+                  <span className="sticker-id-pill">{stickerData.id}</span>
+                  <span className={`piece-type-pill ${stickerData.type}`}>
+                    {stickerData.type === 'edge' ? t.edgesCard.toLowerCase() : t.cornersCard.toLowerCase()}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="close-details-btn"
+                onClick={() => setSelectedSticker(null)}
+                aria-label="Close details"
+              >
+                &times;
+              </button>
+            </div>
+            <div className="details-body">
+              <div className="move-card">
+                <span className="move-label">{t.setupMovesLabel}</span>
+                <code className="move-code">
+                  {isBuffer(stickerData.id)
+                    ? t.bufferLabel
+                    : (setupMoves[stickerData.type][stickerData.letter] || t.none)}
+                </code>
+              </div>
+              <div className="move-card">
+                <span className="move-label">{t.undoMovesLabel}</span>
+                <code className="move-code">
+                  {isBuffer(stickerData.id)
+                    ? t.bufferLabel
+                    : (invertAlg(setupMoves[stickerData.type][stickerData.letter] ?? '') || t.none)}
+                </code>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="sticker-details-placeholder">
+            <p>💡 {t.clickToViewSetup}</p>
+          </div>
+        )}
       </div>
     </article>
   )
 }
 
-function CubeFace({ face, stickers }: { face: string; stickers: string[][] }) {
+function CubeFace({
+  face,
+  stickers,
+  selectedSticker,
+  onSelectSticker,
+}: {
+  face: string
+  stickers: string[][]
+  selectedSticker: string | null
+  onSelectSticker: (sticker: string | null) => void
+}) {
   return (
     <div className={`cube-face face-${face}`} aria-label={`${face} face`}>
-      {stickers.flat().map((sticker) => (
-        <span key={`${face}-${sticker}`} className={isBuffer(sticker) ? 'buffer' : ''}>
-          <strong>{letterForSticker(sticker)}</strong>
-          <small>{sticker}</small>
-        </span>
-      ))}
+      {stickers.flat().map((sticker) => {
+        const isLetter = sticker.length > 1
+        const isSelected = selectedSticker === sticker
+        const isBuf = isBuffer(sticker)
+        const className = [
+          isLetter ? 'clickable-sticker' : '',
+          isBuf ? 'buffer' : '',
+          isSelected ? 'selected' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')
+
+        return (
+          <span
+            key={`${face}-${sticker}`}
+            className={className}
+            onClick={() => isLetter && onSelectSticker(sticker)}
+          >
+            <strong>{letterForSticker(sticker)}</strong>
+            <small>{sticker}</small>
+          </span>
+        )
+      })}
     </div>
   )
 }
