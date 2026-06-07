@@ -32,19 +32,15 @@ npm run build
 
 ## Screenshots
 
-### Concepts Mode (English & Vietnamese)
+### Concepts Mode
 
-| English | Vietnamese |
-|---|---|
-| ![Concepts View (English)](public/screenshot-concepts-en.png) | ![Concepts View (Vietnamese)](public/screenshot-concepts-vi.png) |
+![Concepts View](public/screenshot-concepts.png)
 
-### Guided Example (English & Vietnamese)
+### Guided Example
 
-| English | Vietnamese |
-|---|---|
-| ![Guided Example (English)](public/screenshot-guided-en.png) | ![Guided Example (Vietnamese)](public/screenshot-guided-vi.png) |
+![Guided Example](public/screenshot-guided.png)
 
-### Scramble Trainer (English)
+### Scramble Trainer
 
-![Scramble Trainer](public/screenshot-trainer-en.png)
+![Scramble Trainer](public/screenshot-trainer.png)
 
