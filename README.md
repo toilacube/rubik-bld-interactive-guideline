@@ -29,3 +29,22 @@ npm run build
 - `src/lib/oldPochmann.ts` - method constants, letter scheme, drills, and memo tracing.
 - `src/lib/oldPochmann.test.ts` - unit coverage for memo helpers.
 - `tests/e2e/trainer.spec.ts` - browser smoke checks for desktop and mobile.
+
+## Screenshots
+
+### Concepts Mode (English & Vietnamese)
+
+| English | Vietnamese |
+|---|---|
+| ![Concepts View (English)](public/screenshot-concepts-en.png) | ![Concepts View (Vietnamese)](public/screenshot-concepts-vi.png) |
+
+### Guided Example (English & Vietnamese)
+
+| English | Vietnamese |
+|---|---|
+| ![Guided Example (English)](public/screenshot-guided-en.png) | ![Guided Example (Vietnamese)](public/screenshot-guided-vi.png) |
+
+### Scramble Trainer (English)
+
+![Scramble Trainer](public/screenshot-trainer-en.png)
+
