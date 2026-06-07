@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, createContext, useContext } from 'react'
 import 'cubing/twisty'
 import './App.css'
 import {
@@ -18,81 +18,37 @@ import {
   type PieceType,
   type Sticker,
 } from './lib/oldPochmann'
+import { translations, type Language } from './translations'
 
 type Mode = 'concepts' | 'guided' | 'trainer'
 
-const lessons: Array<{
-  id: Mode
-  label: string
-  title: string
-  summary: string
-}> = [
-  {
-    id: 'concepts',
-    label: 'Concepts',
-    title: 'Old Pochmann model',
-    summary: 'Think in sticker cycles. Every letter is a setup, a swap, and an undo.',
-  },
-  {
-    id: 'guided',
-    label: 'Guided example',
-    title: 'One complete example solve',
-    summary: 'Follow a single scramble from memo to execution, one slow step at a time.',
-  },
-  {
-    id: 'trainer',
-    label: 'Scramble trainer',
-    title: 'Memo and execution flow',
-    summary: 'Enter a scramble, inspect memo pairs, parity, and the execution list.',
-  },
-]
+const LanguageContext = createContext<{
+  lang: Language
+  t: typeof translations['en']
+  setLang: (lang: Language) => void
+}>({
+  lang: 'en',
+  t: translations.en,
+  setLang: () => {},
+})
 
-const roadmap = [
-  {
-    title: '1. Learn what a sticker target means',
-    detail:
-      'A target is not just a cubie. It is the exact sticker currently sitting in your buffer. If the edge buffer sticker shows Q, you execute the Q target, even if the cubie name feels different.',
-  },
-  {
-    title: '2. Memorize edges and corners separately',
-    detail:
-      'Write edge letters first, then corner letters. Pair them two letters at a time only after the raw sequence is correct. Do not try to invent images while you are still unsure about the letters.',
-  },
-  {
-    title: '3. Execute one letter at a time',
-    detail:
-      'For every letter say: setup, swap, undo. Pause after the undo and confirm that you are ready for the next letter. Speed does not matter while learning.',
-  },
-  {
-    title: '4. Add cycle breaks slowly',
-    detail:
-      'When the buffer comes home but pieces are still unsolved, pick an unsolved sticker, add that letter, and continue until that same physical piece returns.',
-  },
-  {
-    title: '5. Add parity only after edges',
-    detail:
-      'If the edge memo count is odd and the corner memo count is odd, run the parity algorithm after edges and before corners. Do not run parity at the end.',
-  },
-]
-
-const beginnerChecks = [
-  'I can point to the edge buffer UR and the corner buffer LUB on the net.',
-  'I can explain why UL is edge letter D and DFR is corner letter V.',
-  'I can execute the edge swap and corner swap from muscle memory while looking.',
-  'I can do one setup, swap, undo, then reverse back to a solved cube.',
-  'I can identify when a memo has odd edge and odd corner counts.',
-]
-
-const slowPracticePlan = [
-  'Day 1: learn the letter net only. No blindfold. Touch each sticker and say its letter.',
-  'Day 2: drill direct targets D for edges and V for corners until setupless swaps feel normal.',
-  'Day 3: drill five setup targets. Say the setup aloud, execute the swap, undo immediately.',
-  'Day 4: trace short scrambles on paper. Stop after memo; do not execute yet.',
-  'Day 5: do sighted BLD solves. Read memo from the page and execute one letter at a time.',
-  'Day 6+: try blindfolded only when sighted BLD solves are boring and repeatable.',
-]
+function useTranslation() {
+  return useContext(LanguageContext)
+}
 
 function App() {
+  const [lang, setLang] = useState<Language>(() => {
+    const saved = localStorage.getItem('rubik-bld-lang')
+    return saved === 'vi' || saved === 'en' ? saved : 'en'
+  })
+
+  const handleLangChange = (newLang: Language) => {
+    setLang(newLang)
+    localStorage.setItem('rubik-bld-lang', newLang)
+  }
+
+  const t = translations[lang]
+
   const [mode, setMode] = useState<Mode>('concepts')
   const [scramble, setScramble] = useState(exampleScrambles[0])
   const [memo, setMemo] = useState<MemoResult | null>(null)
@@ -100,6 +56,27 @@ function App() {
   const [memoError, setMemoError] = useState('')
   const [selectedExecution, setSelectedExecution] = useState(0)
   const [selectedGuidedStep, setSelectedGuidedStep] = useState(0)
+
+  const lessons = useMemo(() => [
+    {
+      id: 'concepts' as const,
+      label: t.conceptsLabel,
+      title: t.conceptsTitle,
+      summary: t.conceptsSummary,
+    },
+    {
+      id: 'guided' as const,
+      label: t.guidedLabel,
+      title: t.guidedTitle,
+      summary: t.guidedSummary,
+    },
+    {
+      id: 'trainer' as const,
+      label: t.trainerLabel,
+      title: t.trainerTitle,
+      summary: t.trainerSummary,
+    },
+  ], [t])
 
   const selectedLesson = lessons.find((lesson) => lesson.id === mode) ?? lessons[0]
   const executionSteps = useMemo(() => buildExecutionSteps(memo), [memo])
@@ -137,14 +114,14 @@ function App() {
       .catch((error: unknown) => {
         if (!cancelled) {
           setMemo(null)
-          setMemoError(error instanceof Error ? error.message : 'Invalid scramble')
+          setMemoError(error instanceof Error ? error.message : t.invalidScramble)
         }
       })
 
     return () => {
       cancelled = true
     }
-  }, [scramble])
+  }, [scramble, t.invalidScramble])
 
   const cubeAlg =
     mode === 'guided'
@@ -154,149 +131,150 @@ function App() {
         : EDGE_SWAP
 
   return (
-    <main className="app-shell">
-      <aside className="lesson-rail" aria-label="Learning modes">
-        <div className="brand-mark">
-          <span>3BLD</span>
-          <strong>Old Pochmann</strong>
-        </div>
-
-        <nav className="mode-tabs">
-          {lessons.map((lesson) => (
-            <button
-              key={lesson.id}
-              type="button"
-              className={lesson.id === mode ? 'active' : ''}
-              onClick={() => setMode(lesson.id)}
-            >
-              <span>{lesson.label}</span>
-            </button>
-          ))}
-        </nav>
-
-        <section className="source-panel">
-          <h2>Method constants</h2>
-          <dl>
-            <div>
-              <dt>Edge buffer</dt>
-              <dd>UR</dd>
+    <LanguageContext.Provider value={{ lang, t, setLang: handleLangChange }}>
+      <main className="app-shell">
+        <aside className="lesson-rail" aria-label="Learning modes">
+          <div className="brand-mark">
+            <span>3BLD</span>
+            <strong>{t.brandMark}</strong>
+            <div className="lang-switcher">
+              <button
+                type="button"
+                className={lang === 'en' ? 'active' : ''}
+                onClick={() => handleLangChange('en')}
+              >
+                EN
+              </button>
+              <button
+                type="button"
+                className={lang === 'vi' ? 'active' : ''}
+                onClick={() => handleLangChange('vi')}
+              >
+                VI
+              </button>
             </div>
-            <div>
-              <dt>Edge target</dt>
-              <dd>UL</dd>
-            </div>
-            <div>
-              <dt>Corner buffer</dt>
-              <dd>LUB</dd>
-            </div>
-            <div>
-              <dt>Corner target</dt>
-              <dd>DFR</dd>
-            </div>
-          </dl>
-        </section>
-      </aside>
-
-      <section className="workspace">
-        <header className="workspace-header">
-          <div>
-            <p className="eyebrow">For CFOP cubers learning blind</p>
-            <h1>{selectedLesson.title}</h1>
-            <p>{selectedLesson.summary}</p>
           </div>
-          <div className="alg-chip">
-            <span>Swap algs</span>
-            <strong>2</strong>
-          </div>
-        </header>
 
-        <section className="cube-stage" aria-label="3D cube guideline">
-          <div className="cube-frame">
-            <twisty-player
-              key={`${mode}-${cubeAlg}-${scramble}`}
-              puzzle="3x3x3"
-              alg={cubeAlg}
-              experimental-setup-alg={mode === 'trainer' ? scramble : undefined}
-              experimental-setup-anchor="start"
-              hint-facelets="floating"
-              background="none"
-              back-view="top-right"
+          <nav className="mode-tabs">
+            {lessons.map((lesson) => (
+              <button
+                key={lesson.id}
+                type="button"
+                className={lesson.id === mode ? 'active' : ''}
+                onClick={() => setMode(lesson.id)}
+              >
+                <span>{lesson.label}</span>
+              </button>
+            ))}
+          </nav>
+
+          <section className="source-panel">
+            <h2>{t.methodConstants}</h2>
+            <dl>
+              <div>
+                <dt>{t.edgeBuffer}</dt>
+                <dd>UR</dd>
+              </div>
+              <div>
+                <dt>{t.edgeTarget}</dt>
+                <dd>UL</dd>
+              </div>
+              <div>
+                <dt>{t.cornerBuffer}</dt>
+                <dd>LUB</dd>
+              </div>
+              <div>
+                <dt>{t.cornerTarget}</dt>
+                <dd>DFR</dd>
+              </div>
+            </dl>
+          </section>
+        </aside>
+
+        <section className="workspace">
+          <header className="workspace-header">
+            <div>
+              <p className="eyebrow">{t.eyebrow}</p>
+              <h1>{selectedLesson.title}</h1>
+              <p>{selectedLesson.summary}</p>
+            </div>
+            <div className="alg-chip">
+              <span>{t.swapAlgs}</span>
+              <strong>2</strong>
+            </div>
+          </header>
+
+          <section className="cube-stage" aria-label="3D cube guideline">
+            <div className="cube-frame">
+              <twisty-player
+                key={`${mode}-${cubeAlg}-${scramble}`}
+                puzzle="3x3x3"
+                alg={cubeAlg}
+                experimental-setup-alg={mode === 'trainer' ? scramble : undefined}
+                experimental-setup-anchor="start"
+                hint-facelets="floating"
+                background="none"
+                back-view="top-right"
+              />
+            </div>
+            <div className="current-alg">
+              <span>{mode === 'trainer' ? t.activeExecution : t.visibleAlgorithm}</span>
+              <code>{cubeAlg || t.selectTargetLetter}</code>
+            </div>
+          </section>
+
+          {mode === 'concepts' && <ConceptsPanel />}
+          {mode === 'guided' && (
+            <GuidedPanel
+              memo={guidedMemo}
+              executionSteps={guidedExecutionSteps}
+              selectedExecution={selectedGuidedStep}
+              onSelectExecution={setSelectedGuidedStep}
             />
-          </div>
-          <div className="current-alg">
-            <span>{mode === 'trainer' ? 'Active execution' : 'Visible algorithm'}</span>
-            <code>{cubeAlg || 'Select a target letter'}</code>
-          </div>
+          )}
+          {mode === 'trainer' && (
+            <TrainerPanel
+              scramble={scramble}
+              memo={memo}
+              memoError={memoError}
+              executionSteps={executionSteps}
+              selectedExecution={selectedExecution}
+              onScrambleChange={setScramble}
+              onSelectExample={(value) => setScramble(value)}
+              onSelectExecution={setSelectedExecution}
+            />
+          )}
         </section>
-
-        {mode === 'concepts' && <ConceptsPanel />}
-        {mode === 'guided' && (
-          <GuidedPanel
-            memo={guidedMemo}
-            executionSteps={guidedExecutionSteps}
-            selectedExecution={selectedGuidedStep}
-            onSelectExecution={setSelectedGuidedStep}
-          />
-        )}
-        {mode === 'trainer' && (
-          <TrainerPanel
-            scramble={scramble}
-            memo={memo}
-            memoError={memoError}
-            executionSteps={executionSteps}
-            selectedExecution={selectedExecution}
-            onScrambleChange={setScramble}
-            onSelectExample={(value) => setScramble(value)}
-            onSelectExecution={setSelectedExecution}
-          />
-        )}
-      </section>
-    </main>
+      </main>
+    </LanguageContext.Provider>
   )
 }
 
 function ConceptsPanel() {
+  const { t } = useTranslation()
   return (
     <section className="content-grid">
       <LetterSchemeCube />
 
       <article className="learning-panel wide">
-        <h2>Concept stack</h2>
+        <h2>{t.conceptStack}</h2>
         <ol className="concept-list">
-          <li>
-            <strong>Memo stickers, not cubies.</strong>
-            The sticker in the buffer tells you where to shoot next.
-          </li>
-          <li>
-            <strong>Execution is mechanical.</strong>
-            For each letter, setup the target sticker, run the swap algorithm, undo
-            setup.
-          </li>
-          <li>
-            <strong>New cycles are explicit.</strong>
-            When the buffer returns while other pieces remain unsolved, break into
-            any unsolved sticker and continue.
-          </li>
-          <li>
-            <strong>Orientation cases become memo pairs.</strong>
-            Flipped edges and twisted corners show up as two letters on the same
-            physical piece.
-          </li>
-          <li>
-            <strong>Parity is predictable.</strong>
-            Odd edge memo and odd corner memo means run the parity alg between the
-            two phases.
-          </li>
+          {t.conceptsList.map((concept, index) => (
+            <li key={index}>
+              <strong>{concept.title} </strong>
+              {concept.desc}
+            </li>
+          ))}
         </ol>
       </article>
 
-      <AlgorithmCard title="Edge swap" label="UR to UL" alg={EDGE_SWAP} />
-      <AlgorithmCard title="Corner swap" label="LUB to DFR" alg={CORNER_SWAP} />
-      <AlgorithmCard title="Parity" label="Odd and odd" alg={PARITY_ALG} />
+      <AlgorithmCard title={t.edgeSwap} label={t.urToUl} alg={EDGE_SWAP} />
+      <AlgorithmCard title={t.cornerSwap} label={t.lubToDfr} alg={CORNER_SWAP} />
+      <AlgorithmCard title={t.parity} label={t.oddAndOdd} alg={PARITY_ALG} />
 
       <div className="letter-schemes">
-        <LetterMap title="Edge letter scheme" type="edge" />
-        <LetterMap title="Corner letter scheme" type="corner" />
+        <LetterMap title={t.edgeLetterScheme} type="edge" />
+        <LetterMap title={t.cornerLetterScheme} type="corner" />
       </div>
       <SlowLearningGuide />
     </section>
@@ -337,17 +315,15 @@ const cubeFaces = {
 } satisfies Record<string, string[][]>
 
 function LetterSchemeCube() {
+  const { t } = useTranslation()
   return (
     <article className="learning-panel wide letter-cube-panel">
       <div className="panel-heading">
         <div>
-          <h2>Letter scheme cube</h2>
-          <p>
-            Centers stay as face names. Edge and corner stickers show their memo
-            letters for the default white-top, green-front orientation.
-          </p>
+          <h2>{t.letterSchemeCube}</h2>
+          <p>{t.letterSchemeCubeDesc}</p>
         </div>
-        <span className="buffer-key">Buffer stickers highlighted</span>
+        <span className="buffer-key">{t.bufferStickersHighlighted}</span>
       </div>
 
       <div className="scheme-net" aria-label="Full letter scheme net">
@@ -392,80 +368,62 @@ function GuidedPanel({
   selectedExecution: number
   onSelectExecution: (index: number) => void
 }) {
+  const { t } = useTranslation()
   const edgeSteps = executionSteps.filter((step) => step.phase === 'edge')
   const cornerSteps = executionSteps.filter((step) => step.phase === 'corner')
 
   return (
     <section className="content-grid guided-grid">
       <article className="learning-panel wide guided-intro">
-        <h2>Worked example scramble</h2>
+        <h2>{t.workedExampleScramble}</h2>
         <code>{exampleScrambles[0]}</code>
-        <p>
-          This page is not a random trainer. It is one complete sighted BLD solve.
-          Read each section in order, click the current execution letter, and watch
-          only that step on the cube above.
-        </p>
+        <p>{t.guidedIntro}</p>
       </article>
 
       <article className="learning-panel">
-        <h2>Step 1: write edge memo</h2>
-        <p>
-          Start from the edge buffer `UR`. The letter sequence below is paired only
-          to make it easier to read.
-        </p>
+        <h2>{t.step1EdgeMemo}</h2>
+        <p>{t.edgeMemoDesc}</p>
         <strong className="memo-line">{memo?.edgePairs.join(' ') || 'Loading...'}</strong>
         <ol className="detail-list">
-          <li>Say the first pair slowly.</li>
-          <li>Point to each target letter on the letter scheme table if needed.</li>
-          <li>Do not execute yet. This step is only memo.</li>
+          <li>{t.edgeMemoTip1}</li>
+          <li>{t.edgeMemoTip2}</li>
+          <li>{t.edgeMemoTip3}</li>
         </ol>
       </article>
 
       <article className="learning-panel">
-        <h2>Step 2: write corner memo</h2>
-        <p>
-          After edges, move to the corner buffer `LUB`. Treat corners as a separate
-          list.
-        </p>
+        <h2>{t.step2CornerMemo}</h2>
+        <p>{t.cornerMemoDesc}</p>
         <strong className="memo-line">{memo?.cornerPairs.join(' ') || 'Loading...'}</strong>
         <ol className="detail-list">
-          <li>Read corners after edges, not mixed with edges.</li>
-          <li>Every corner letter still means setup, swap, undo.</li>
-          <li>Keep the corner memo separate until execution.</li>
+          <li>{t.cornerMemoTip1}</li>
+          <li>{t.cornerMemoTip2}</li>
+          <li>{t.cornerMemoTip3}</li>
         </ol>
       </article>
 
       <article className="learning-panel">
-        <h2>Step 3: check parity</h2>
+        <h2>{t.step3CheckParity}</h2>
         <strong className={memo?.parity ? 'parity-on' : 'parity-off'}>
-          {memo?.parity ? 'Run parity after edges' : 'No parity in this example'}
+          {memo?.parity ? t.runParityAfterEdges : t.noParityInExample}
         </strong>
-        <p>
-          Count the raw edge letters and raw corner letters. If both counts are
-          odd, parity is inserted after all edges and before the first corner.
-        </p>
+        <p>{t.parityDesc}</p>
       </article>
 
       <article className="learning-panel">
-        <h2>Step 4: execute edges first</h2>
-        <p>
-          Click edge step 1. Do its setup, swap, and undo. Then move to the next
-          edge letter. Do not start corners until every edge row is done.
-        </p>
-        <strong className="step-count">{edgeSteps.length} edge letters</strong>
+        <h2>{t.step4ExecuteEdges}</h2>
+        <p>{t.executeEdgesDesc}</p>
+        <strong className="step-count">{edgeSteps.length} {t.edgeLettersCount}</strong>
       </article>
 
       <article className="learning-panel">
-        <h2>Step 5: execute corners last</h2>
-        <p>
-          Corners use the corner swap and their own setup table. If there is
-          parity, do parity before this section.
-        </p>
-        <strong className="step-count">{cornerSteps.length} corner letters</strong>
+        <h2>{t.step5ExecuteCorners}</h2>
+        <p>{t.executeCornersDesc}</p>
+        <strong className="step-count">{cornerSteps.length} {t.cornerLettersCount}</strong>
       </article>
 
       <article className="learning-panel wide">
-        <h2>Numbered execution walkthrough</h2>
+        <h2>{t.numberedExecutionWalkthrough}</h2>
         <div className="guided-execution-list">
           {executionSteps.map((step, index) => (
             <button
@@ -475,7 +433,7 @@ function GuidedPanel({
               onClick={() => onSelectExecution(index)}
             >
               <span className="step-number">{index + 1}</span>
-              <span>{step.phase}</span>
+              <span>{step.phase === 'edge' ? t.edgesCard.toLowerCase() : step.phase === 'corner' ? t.cornersCard.toLowerCase() : step.phase}</span>
               <strong>{step.letter}</strong>
               <ExecutionParts step={step} />
             </button>
@@ -484,13 +442,11 @@ function GuidedPanel({
       </article>
 
       <article className="learning-panel wide">
-        <h2>How to use this page</h2>
+        <h2>{t.howToUsePage}</h2>
         <ol className="detail-list">
-          <li>First read the memo cards without touching the cube.</li>
-          <li>Then click execution row 1 and perform only that row.</li>
-          <li>After the undo, pause and click the next row.</li>
-          <li>If the cube above looks confusing, ignore animation and read the row chips.</li>
-          <li>Repeat this exact example until the order feels boring.</li>
+          {t.howToUseTips.map((tip, index) => (
+            <li key={index}>{tip}</li>
+          ))}
         </ol>
       </article>
     </section>
@@ -516,19 +472,20 @@ function TrainerPanel({
   onSelectExample: (scramble: string) => void
   onSelectExecution: (index: number) => void
 }) {
+  const { t } = useTranslation()
   return (
     <section className="content-grid trainer-grid">
       <article className="learning-panel wide">
         <div className="panel-heading">
-          <h2>Scramble</h2>
+          <h2>{t.scrambleTitle}</h2>
           <select
-            aria-label="Example scramble"
+            aria-label={t.exampleScrambleSelect}
             value={scramble}
             onChange={(event) => onSelectExample(event.target.value)}
           >
             {exampleScrambles.map((example, index) => (
               <option key={example} value={example}>
-                Example {index + 1}
+                {langSelectText(t.exampleScrambleSelect, index + 1)}
               </option>
             ))}
           </select>
@@ -536,29 +493,29 @@ function TrainerPanel({
         <textarea
           value={scramble}
           onChange={(event) => onScrambleChange(event.target.value)}
-          aria-label="Scramble input"
+          aria-label={t.scrambleInputLabel}
           spellCheck={false}
         />
         {memoError && <p className="error-text">{memoError}</p>}
       </article>
 
-      <MemoCard title="Edges" pairs={memo?.edgePairs ?? []} count={memo?.edges.length ?? 0} />
+      <MemoCard title={t.edgesCard} pairs={memo?.edgePairs ?? []} count={memo?.edges.length ?? 0} />
       <MemoCard
-        title="Corners"
+        title={t.cornersCard}
         pairs={memo?.cornerPairs ?? []}
         count={memo?.corners.length ?? 0}
       />
 
       <article className="learning-panel parity-panel">
-        <h2>Parity</h2>
+        <h2>{t.parity}</h2>
         <strong className={memo?.parity ? 'parity-on' : 'parity-off'}>
-          {memo?.parity ? 'Run parity' : 'No parity'}
+          {memo?.parity ? t.runParity : t.noParity}
         </strong>
-        <code>{memo?.parity ? PARITY_ALG : 'Edge and corner counts are not both odd.'}</code>
+        <code>{memo?.parity ? PARITY_ALG : t.parityConditionMuted}</code>
       </article>
 
       <article className="learning-panel wide">
-        <h2>Execution list</h2>
+        <h2>{t.executionList}</h2>
         <div className="execution-list">
           {executionSteps.map((step, index) => (
             <button
@@ -567,7 +524,7 @@ function TrainerPanel({
               className={index === selectedExecution ? 'active' : ''}
               onClick={() => onSelectExecution(index)}
             >
-              <span>{step.phase}</span>
+              <span>{step.phase === 'edge' ? t.edgesCard.toLowerCase() : step.phase === 'corner' ? t.cornersCard.toLowerCase() : step.phase}</span>
               <strong>{step.letter}</strong>
               <ExecutionParts step={step} />
             </button>
@@ -576,29 +533,19 @@ function TrainerPanel({
       </article>
 
       <article className="learning-panel wide">
-        <h2>Slow solve protocol</h2>
+        <h2>{t.slowSolveProtocol}</h2>
         <div className="protocol-grid">
           <section>
-            <h3>Memo pass</h3>
-            <p>
-              Read the edge memo from left to right. Mark every cycle break mentally
-              as a fresh start, not as a mistake. Then repeat the same process for
-              corners.
-            </p>
+            <h3>{t.protocolMemoTitle}</h3>
+            <p>{t.protocolMemoDesc}</p>
           </section>
           <section>
-            <h3>Execution pass</h3>
-            <p>
-              Click the first execution row, do only that algorithm, then move to
-              the next row. Do not look ahead while your hands are moving.
-            </p>
+            <h3>{t.protocolExecTitle}</h3>
+            <p>{t.protocolExecDesc}</p>
           </section>
           <section>
-            <h3>Error recovery</h3>
-            <p>
-              If you lose your place, stop immediately. Find the last completed
-              letter in the execution list instead of guessing the next algorithm.
-            </p>
+            <h3>{t.protocolErrorTitle}</h3>
+            <p>{t.protocolErrorDesc}</p>
           </section>
         </div>
       </article>
@@ -606,13 +553,21 @@ function TrainerPanel({
   )
 }
 
+function langSelectText(prefix: string, index: number): string {
+  if (prefix === 'Lượt xáo ví dụ') {
+    return `Ví dụ ${index}`
+  }
+  return `Example ${index}`
+}
+
 function SlowLearningGuide() {
+  const { t } = useTranslation()
   return (
     <>
       <article className="learning-panel wide">
-        <h2>Slow learner roadmap</h2>
+        <h2>{t.slowLearnerRoadmap}</h2>
         <div className="roadmap-grid">
-          {roadmap.map((item) => (
+          {t.roadmap.map((item) => (
             <section key={item.title} className="roadmap-step">
               <h3>{item.title}</h3>
               <p>{item.detail}</p>
@@ -622,18 +577,18 @@ function SlowLearningGuide() {
       </article>
 
       <article className="learning-panel">
-        <h2>Readiness checklist</h2>
+        <h2>{t.readinessChecklist}</h2>
         <ul className="check-list">
-          {beginnerChecks.map((item) => (
+          {t.beginnerChecks.map((item) => (
             <li key={item}>{item}</li>
           ))}
         </ul>
       </article>
 
       <article className="learning-panel">
-        <h2>Practice schedule</h2>
+        <h2>{t.practiceSchedule}</h2>
         <ol className="detail-list">
-          {slowPracticePlan.map((item) => (
+          {t.slowPracticePlan.map((item) => (
             <li key={item}>{item}</li>
           ))}
         </ol>
@@ -661,6 +616,7 @@ function AlgorithmCard({
 }
 
 function LetterMap({ title, type }: { title: string; type: PieceType }) {
+  const { t } = useTranslation()
   const stickers = [...(type === 'edge' ? edgeStickers : cornerStickers)].sort(
     (a, b) => a.letter.localeCompare(b.letter),
   )
@@ -670,10 +626,10 @@ function LetterMap({ title, type }: { title: string; type: PieceType }) {
       <h2>{title}</h2>
       <div className="letter-table">
         <div className="letter-table-head" aria-hidden="true">
-          <span>Letter</span>
-          <span>Sticker</span>
-          <span>Setup</span>
-          <span>Undo</span>
+          <span>{t.letterTableHead.letter}</span>
+          <span>{t.letterTableHead.sticker}</span>
+          <span>{t.letterTableHead.setup}</span>
+          <span>{t.letterTableHead.undo}</span>
         </div>
         {stickers.map((sticker) => (
           <LetterSetupRow key={sticker.id} sticker={sticker} />
@@ -684,6 +640,7 @@ function LetterMap({ title, type }: { title: string; type: PieceType }) {
 }
 
 function LetterSetupRow({ sticker }: { sticker: Sticker }) {
+  const { t } = useTranslation()
   const setup = setupForSticker(sticker)
   const undo = setup.kind === 'target' ? invertAlg(setup.setup) : setup.setup
 
@@ -691,8 +648,8 @@ function LetterSetupRow({ sticker }: { sticker: Sticker }) {
     <div className={isBuffer(sticker.id) ? 'letter-row buffer' : 'letter-row'}>
       <strong>{sticker.letter}</strong>
       <span>{sticker.id}</span>
-      <code>{setup.setup || 'none'}</code>
-      <code>{undo || 'none'}</code>
+      <code>{setup.setup || t.none}</code>
+      <code>{undo || t.none}</code>
     </div>
   )
 }
@@ -706,13 +663,14 @@ function MemoCard({
   pairs: string[]
   count: number
 }) {
+  const { t } = useTranslation()
   return (
     <article className="learning-panel memo-card">
       <div>
         <h2>{title}</h2>
-        <span>{count} letters</span>
+        <span>{count} {t.lettersUnit}</span>
       </div>
-      <p>{pairs.length ? pairs.join(' ') : 'Solved'}</p>
+      <p>{pairs.length ? pairs.join(' ') : t.solved}</p>
     </article>
   )
 }
@@ -755,11 +713,12 @@ function buildExecutionSteps(memo: MemoResult | null): ExecutionStep[] {
 }
 
 function ExecutionParts({ step }: { step: ExecutionStep }) {
+  const { t } = useTranslation()
   return (
     <div className="execution-parts">
       <span className="part setup">
         <em>setup</em>
-        <code>{step.setup || 'none'}</code>
+        <code>{step.setup || t.none}</code>
       </span>
       <span className="part swap">
         <em>{step.phase === 'parity' ? 'parity' : 'swap'}</em>
@@ -767,7 +726,7 @@ function ExecutionParts({ step }: { step: ExecutionStep }) {
       </span>
       <span className="part undo">
         <em>undo</em>
-        <code>{step.undo || 'none'}</code>
+        <code>{step.undo || t.none}</code>
       </span>
     </div>
   )

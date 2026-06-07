@@ -850,3 +850,31 @@ textarea {
     grid-template-columns: 1fr;
   }
 }
+
+.lang-switcher {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.lang-switcher button {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--muted);
+  transition: all 160ms ease;
+}
+
+.lang-switcher button:hover {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+.lang-switcher button.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
